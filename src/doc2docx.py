@@ -81,7 +81,7 @@ def convert_to_docx(libreoffice_path, doc_file, output_path, overwrite):
     )
     if os.path.exists(output_file):
         if overwrite:
-            logging.info("File %s already exists. Overwriting.", output_file)
+            logging.debug("File %s already exists. Overwriting.", output_file)
         else:
             logging.info("File %s already exists. Skipping conversion.", output_file)
             return
@@ -100,7 +100,7 @@ def convert_to_docx(libreoffice_path, doc_file, output_path, overwrite):
     )
     stdout, stderr = process.communicate()
     if stdout:
-        logging.info("Output: %s", stdout.decode("utf-8"))
+        logging.debug("Output: %s", stdout.decode("utf-8"))  # Change this line
     if stderr:
         logging.error("Error: %s", stderr.decode("utf-8"))
         if stderr.strip():
@@ -163,12 +163,11 @@ def main():
     args = parser.parse_args()
 
     logging.basicConfig(
-        level=logging.INFO if args.verbose else logging.WARNING,
+        level=logging.DEBUG if args.verbose else logging.INFO,  # Change this line
         format="%(asctime)s [%(levelname)s] %(message)s",
         handlers=[logging.FileHandler("doc2docx.log"), logging.StreamHandler()],
     )
 
-    executor = ThreadPoolExecutor()
     try:
         libreoffice_path = args.libreoffice
         doc_files = get_doc_files(args.source)
@@ -176,8 +175,7 @@ def main():
             logging.error("No .doc files found in the source directory.")
             return
         for doc_file in doc_files:
-            executor.submit(
-                convert_to_docx,
+            convert_to_docx(
                 libreoffice_path,
                 doc_file,
                 args.output,
@@ -185,11 +183,8 @@ def main():
             )
     except KeyboardInterrupt:
         logging.info("Interrupted by user. Exiting.")
-        executor.shutdown(wait=False)
     except Exception as e:
         logging.error(str(e))
-    else:
-        executor.shutdown(wait=True)
 
 
 if __name__ == "__main__":
